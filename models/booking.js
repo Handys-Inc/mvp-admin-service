@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 async function fetchBookingSchema() {
-    const url = process.env.DISPUTE_SCHEMA;
+    const url = process.env.BOOKING_SCHEMA;
     try {
         const response = await axios.get(url);
         return response.data;

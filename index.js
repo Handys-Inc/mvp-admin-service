@@ -27,9 +27,12 @@ app.options("*", cors());
 
 // const userRoutes = require('./routes/users');
 // const serviceProviderRoutes = require('./routes/service-providers');
+const authRoutes = require('./routes/admin');
+const userRoutes = require('./routes/users');
 
 app.get("/", (req, res, next) => { return res.status(200).json({message: "Welcome to Handys Admin Service"})});
-// app.use("/api/users", userRoutes);
+app.get("/api/admin", authRoutes);
+app.use("/api/users", userRoutes);
 // app.use("/api/service-providers", serviceProviderRoutes);
 
 app.use(session({
@@ -38,7 +41,7 @@ app.use(session({
   saveUninitialized: false
 }));
 
-const port = process.env.PORT || 3500 ;
+const port = process.env.PORT || 4500 ;
 
 mongoose
   .connect(process.env.MONGO_DB, {
