@@ -8,5 +8,7 @@ const router = express.Router();
 
 router.post("/", auth, bookingsController.getJobs);
 router.post("/complete", auth, bookingsController.getCompleteJobs);
+router.get("/:client_id", auth, bookingsController.getClientServiceHistory);
+router.get("/:provider_id", auth, bookingsController.getProviderServiceHistory);
 
 module.exports = router;
