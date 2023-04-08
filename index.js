@@ -25,7 +25,6 @@ app.use((req, res, next) => {
 
 app.options("*", cors());
 
-// const userRoutes = require('./routes/users');
 // const serviceProviderRoutes = require('./routes/service-providers');
 const authRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');

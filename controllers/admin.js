@@ -8,7 +8,8 @@ const { generateLoginToken } = require('../utilities/adminAuthentication');
 
 
 exports.createAdmin = async (req, res) => {
-    const admin = req.user._id;
+    console.log("here");
+    //const admin = req.user._id;
     const { firstName, lastName, email, password, adminAccess, createdBy} = req.body;
 
     try {
