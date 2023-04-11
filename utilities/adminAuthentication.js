@@ -33,6 +33,7 @@ async function createAdmin(firstName, lastName, email, password, adminAccess, cr
 
 
 async function generateLoginToken(admin) {
+    console.log(admin);
     const payload = {
         _id: admin._id,
         name: `${admin.firstName} ${admin.lastName}`,

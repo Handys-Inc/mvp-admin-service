@@ -4,30 +4,27 @@ const { Admin } = require('../models/admin');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { generateLoginToken } = require('../utilities/adminAuthentication');
+const { createAdmin, generateLoginToken } = require('../utilities/adminAuthentication');
 
+// async function hash(password) {
+//     const salt = await bcrypt.genSalt(10);
+//     const hashed = await bcrypt.hash(password, salt);
+//     return hashed;
+// };
 
 exports.createAdmin = async (req, res) => {
-    console.log("here");
-    //const admin = req.user._id;
-    const { firstName, lastName, email, password, adminAccess, createdBy} = req.body;
+    console.log(req.admin);
+    const admin = req.admin._id;
+    const { firstName, lastName, email, password, adminAccess} = req.body;
+
+    const creator = await Admin.findOne({$and: [{_id: admin}]});
+    let createdBy = `${creator.firstName} ${creator.lastName}`;
+
 
     try {
-        const admin = new Admin({
-            firstName: firstName.toLowerCase(),
-            lastName: lastName.toLowerCase(),
-            email: email.toLowerCase(),
-            password: await hash(password),
-            profilePicture: "",
-            userLevel: "admin", //user or admin
-            adminAccess: adminAccess, 
-            status: "active",
-            createdBy: createdBy
-        });
+        let newAdmin = await createAdmin(firstName, lastName, email, password, adminAccess, createdBy);
 
-        await admin.save();
-
-        if(admin) {
+        if(newAdmin) {
             return res.status(200).send(admin)
         }
         else{
@@ -40,10 +37,11 @@ exports.createAdmin = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-
     let admin = null;
     if(req.body.email) admin = await Admin.findOne({$and: [{email: req.body.email.toLowerCase()}]});
-    if(!user) return res.status(404).send('Invalid email or password');
+    if(!admin) return res.status(404).send('Invalid email or password');
+
+    console.log(admin);
 
     const validPassowrd = await bcrypt.compare(
         req.body.password, 
@@ -69,7 +67,7 @@ exports.login = async (req, res) => {
         if(lastLogin) {
             return res.header("x-auth-token", token.token)
               .status(200)
-              .send(lastLogin);
+              .send({user: lastLogin, token: token.token });
         }
     
         else return res.status(200).send('Login failed');
