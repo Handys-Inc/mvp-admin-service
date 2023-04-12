@@ -6,26 +6,26 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { createAdmin, generateLoginToken } = require('../utilities/adminAuthentication');
 
-// async function hash(password) {
-//     const salt = await bcrypt.genSalt(10);
-//     const hashed = await bcrypt.hash(password, salt);
-//     return hashed;
-// };
 
 exports.createAdmin = async (req, res) => {
-    console.log(req.admin);
     const admin = req.admin._id;
     const { firstName, lastName, email, password, adminAccess} = req.body;
+
+    const loggedIn = await Admin.findById(admin);
+
+    if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
+
 
     const creator = await Admin.findOne({$and: [{_id: admin}]});
     let createdBy = `${creator.firstName} ${creator.lastName}`;
 
 
     try {
-        let newAdmin = await createAdmin(firstName, lastName, email, password, adminAccess, createdBy);
+        let newAdmin = await createAdmin(firstName, lastName, email, password, adminAccess, admin);
 
         if(newAdmin) {
-            return res.status(200).send(admin)
+            newAdmin.creatorName = createdBy;
+            return res.status(200).send(newAdmin)
         }
         else{
             return res.status(400).send('Admin creation failed');
@@ -40,8 +40,6 @@ exports.login = async (req, res) => {
     let admin = null;
     if(req.body.email) admin = await Admin.findOne({$and: [{email: req.body.email.toLowerCase()}]});
     if(!admin) return res.status(404).send('Invalid email or password');
-
-    console.log(admin);
 
     const validPassowrd = await bcrypt.compare(
         req.body.password, 
@@ -78,14 +76,14 @@ exports.login = async (req, res) => {
 }
 
 exports.updateAccess = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
-    if (!isValid) return res.status(400).send("Invalid user id");
+    if (!isValid) return res.status(400).send("Invalid admin id");
 
     const { adminAccess, adminUser } = req.body;
 
-    const loggedIn = await Admin.findById(user_id);
+    const loggedIn = await Admin.findById(admin_id);
 
     if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
 
@@ -110,8 +108,8 @@ exports.updateAccess = async (req, res) => {
 const itemsPerPage = 10;
 
 exports.getAllAdmins = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
@@ -137,5 +135,44 @@ exports.getAllAdmins = async (req, res) => {
         else return res.status(400).send('Admin users retrieval failed');
     } catch (error) {
         console.log(error)
+    }
+}
+
+exports.editAdmin = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
+
+    if (!isValid) return res.status(400).send("Invalid admin id");
+    if (!req.body.email || req.body.email.length < 1 || req.body.firstName || req.body.lastName) return res.status(400).send("Please fill all fields.");
+
+    const { adminUser, firstName, lastName, email } = req.body;
+
+    const loggedIn = await Admin.findById(admin_id);
+
+    if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
+
+    //find admin to be updated
+    const admin = await Admin.findById(adminUser);
+    if(!admin) return res.status(404).send('Admin user not found');
+
+    const emailCheck = await Admin.findOne({email: email});
+        if (emailCheck && emailCheck._id.toString() !== admin._id.toString()) return res.status(400).send("The provided email already belongs to another account.");
+
+    try {
+
+        const updatedAdmin = await Admin.findByIdAndUpdate(adminUser, {
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        }, { new: true });
+
+
+        if(updatedAdmin) res.status(200).send({
+            message: 'Admin user updated',
+            data: updatedAdmin
+        });
+        else res.status(400).send('Admin user update failed');
+    } catch (error) {
+        console.log(error);
     }
 }
