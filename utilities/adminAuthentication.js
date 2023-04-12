@@ -23,8 +23,8 @@ async function createAdmin(firstName, lastName, email, password, adminAccess, cr
             createdBy: createdBy
         });
 
-        await admin.save();
-        return admin;
+        const newAdmin = await admin.save();
+        return newAdmin;
         
     } catch (error) {
         console.error('unable to save admin: ', error);
@@ -33,6 +33,7 @@ async function createAdmin(firstName, lastName, email, password, adminAccess, cr
 
 
 async function generateLoginToken(admin) {
+    console.log(admin);
     const payload = {
         _id: admin._id,
         name: `${admin.firstName} ${admin.lastName}`,

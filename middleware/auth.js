@@ -8,7 +8,7 @@ function auth(req, res, next) {
     try {
         const decoded = jwt.verify(token, process.env.JWT_KEY);
 
-        req.user = decoded;
+        req.admin = decoded;
         next();
     } catch (ex) {
         console.log('ex', ex)

@@ -8,6 +8,12 @@ const session = require('express-session');
 const app = express();
 require("dotenv").config();
 
+
+//debgging HTTP requests
+const morgan = require('morgan');
+app.use(morgan('dev'));
+
+
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
@@ -25,14 +31,13 @@ app.use((req, res, next) => {
 
 app.options("*", cors());
 
-// const userRoutes = require('./routes/users');
 // const serviceProviderRoutes = require('./routes/service-providers');
 const authRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const bookingRoutes = require('./routes/bookings');
 
 app.get("/", (req, res, next) => { return res.status(200).json({message: "Welcome to Handys Admin Service"})});
-app.get("/api/admin", authRoutes);
+app.use("/api/admin", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/bookings", bookingRoutes);
 // app.use("/api/service-providers", serviceProviderRoutes);
