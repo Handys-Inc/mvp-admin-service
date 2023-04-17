@@ -38,8 +38,8 @@ exports.createAdmin = async (req, res) => {
 
 exports.login = async (req, res) => {
     let admin = null;
-    if(req.body.email) admin = await Admin.findOne({$and: [{email: req.body.email.toLowerCase()}]});
-    if(!admin) return res.status(404).send('Invalid email or password');
+    if(req.body.email) admin = await Admin.findOne({$and: [{email: req.body.email.toLowerCase(), status: "active"}]});
+    if(!admin) return res.status(404).send('Invalid email or password or inactive user');
 
     const validPassowrd = await bcrypt.compare(
         req.body.password, 
@@ -88,7 +88,7 @@ exports.updateAccess = async (req, res) => {
     if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
 
     //find user to be updated
-    const admin = await Admin.findById(adminUser);
+    const admin = await Admin.findOne({$and: [{_id: admin_id, status: "active"}]});
     if(!admin) return res.status(404).send('Admin user not found');
 
     try {
@@ -118,7 +118,7 @@ exports.getAllAdmins = async (req, res) => {
     const endIndex = page * itemsPerPage;
 
     try {
-        let admins = await Admin.find().lean();
+        let admins = await Admin.find({ status: "active"}).lean();
 
         if(!admins) return res.status(404).send('No admin users found');
 
@@ -143,7 +143,7 @@ exports.editAdmin = async (req, res) => {
     let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid admin id");
-    if (!req.body.email || req.body.email.length < 1 || req.body.firstName || req.body.lastName) return res.status(400).send("Please fill all fields.");
+    if (!req.body.email  || !req.body.firstName || !req.body.lastName) return res.status(400).send("Please fill all fields.");
 
     const { adminUser, firstName, lastName, email } = req.body;
 
@@ -172,6 +172,73 @@ exports.editAdmin = async (req, res) => {
             data: updatedAdmin
         });
         else res.status(400).send('Admin user update failed');
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+exports.updateAdminPassword = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
+
+    if (!isValid) return res.status(400).send("Invalid admin id");
+
+    const { adminUser, password, confirmPassword } = req.body;
+
+    if( password !== confirmPassword) return res.status(401).send('Passwords are not the same');
+
+    const loggedIn = await Admin.findById(admin_id);
+
+    if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
+
+    //find admin to be updated
+    const admin = await Admin.findById(adminUser);
+    if(!admin) return res.status(404).send('Admin user not found');
+
+    try {
+
+        const updateAdminPassword = await Admin.findByIdAndUpdate(adminUser, {
+            password: password
+        }, { new: true });
+
+
+        if(updateAdminPassword) res.status(200).send({
+            message: 'Admin user updated',
+            data: updateAdminPassword
+        });
+        else res.status(400).send('Admin user update failed');
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+exports.deleteAdmin = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
+
+    if (!isValid) return res.status(400).send("Invalid admin id");
+
+    const { adminUser } = req.body;
+
+    const loggedIn = await Admin.findById(admin_id);
+
+    if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
+
+    //find admin to be deleted
+    const admin = await Admin.findById(adminUser);
+    if(!admin) return res.status(404).send('Admin user not found');
+
+    try {
+        const deleteAdmin = await Admin.findByIdAndUpdate(adminUser, {
+            status: "deleted"
+        }, { new: true });
+
+
+        if(deleteAdmin) res.status(200).send({
+            message: 'Admin user deleted',
+            data: deleteAdmin
+        });
+        else res.status(400).send('Admin user delete failed');
     } catch (error) {
         console.log(error);
     }
