@@ -10,5 +10,7 @@ router.post("/login", adminController.login);
 router.post("/access", auth, adminController.updateAccess);
 router.get("/all", auth, adminController.getAllAdmins);
 router.post("/edit", auth, adminController.editAdmin);
+router.put("/update-password", auth, adminController.updateAdminPassword);
+router.put("/delete", auth, adminController.deleteAdmin);
 
 module.exports = router;
