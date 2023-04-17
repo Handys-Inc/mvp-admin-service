@@ -1,7 +1,7 @@
 const express = require('express');
 const { Admin } = require('../models/admin');
 const { User } = require('../models/user');
-const { Provider } = require('../models/serviceProvider');
+const { ServiceProvider } = require('../models/serviceProvider');
 
 const _ = require('lodash');
 const mongoose = require('mongoose');
@@ -12,12 +12,12 @@ const { generateLoginToken } = require('../utilities/adminAuthentication');
 const itemsPerPage = 10;
 
 exports.getClients = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const loggedIn = await Admin.findById(user_id);
+    const loggedIn = await Admin.findById(admin_id);
 
     if(!loggedIn.adminAccess.includes('super' || 'usermgt ')) return res.status(401).send('Unauthorized access');
 
@@ -26,7 +26,7 @@ exports.getClients = async (req, res) => {
     const endIndex = page * itemsPerPage;
 
     try {
-        let clients = await User.find({ userAccess: {$nin: ['service']}}).lean();
+        let clients = await User.find({ userAccess: {$in: ['customer']}}).lean();
 
         if(!clients) return res.status(404).send('No clients found');
 
@@ -47,12 +47,12 @@ exports.getClients = async (req, res) => {
 }
 
 exports.getProviders = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const loggedIn = await Admin.findById(user_id);
+    const loggedIn = await Admin.findById(admin_id);
 
     if(!loggedIn.adminAccess.includes('super' || 'usermgt ')) return res.status(401).send('Unauthorized access');
 
@@ -81,7 +81,7 @@ exports.getProviders = async (req, res) => {
                 data: paginateProviders
             });
         }
-        else return res.status(400).send('Admin users retrieval failed');
+        else return res.status(400).send('Providers retrieval failed');
     } catch (error) {
         console.log(error)
     }
