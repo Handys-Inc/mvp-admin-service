@@ -129,7 +129,10 @@ exports.getServiceHistory = async (req, res) => {
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const user_id = req.params.id;
+    let user_id = req.params.id;
+    let user = new mongoose.Types.ObjectId(user_id);
+
+    console.log(user)
 
     const loggedIn = await Admin.findById(admin_id);
 
@@ -140,20 +143,14 @@ exports.getServiceHistory = async (req, res) => {
     const endIndex = page * itemsPerPage;
 
     try {
-        // let serviceHistory = await Booking.find(
-        //     {
-        //         $or: [
-        //             { client: user_id}, 
-        //             { serviceProvider: user_id}
-        //         ]
-        //     }
-        // ).lean();
-
         let serviceHistory = await Booking.find(
-            { serviceProvider: user_id}, 
+            {
+                $or: [
+                    { client: user}, 
+                    { serviceProvider: user}
+                ]
+            }
         ).lean();
-
-        console.log(serviceHistory);
 
         if(!serviceHistory) return res.status(404).send('No jobs found for user');
 
