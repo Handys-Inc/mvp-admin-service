@@ -33,7 +33,8 @@ const adminSchema = new mongoose.Schema({
         type: Date
     },
     status: {
-        type: String
+        type: String,
+        enum: ['active', 'suspended', 'deleted'],
     },
     lastUpdatedAt: {
         type: Date

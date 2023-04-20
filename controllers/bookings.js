@@ -18,7 +18,7 @@ exports.getJobs = async (req, res) => {
 
     const loggedIn = await Admin.findById(user_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'bookingMgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -75,7 +75,7 @@ exports.getCompleteJobs = async (req, res) => {
 
     const loggedIn = await Admin.findById(user_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'bookingMgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -132,11 +132,9 @@ exports.getServiceHistory = async (req, res) => {
     let user_id = req.params.id;
     let user = new mongoose.Types.ObjectId(user_id);
 
-    console.log(user)
-
     const loggedIn = await Admin.findById(admin_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'userMgt' || 'bookingMgt' )) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt') || !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
