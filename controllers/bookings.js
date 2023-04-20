@@ -11,13 +11,12 @@ const mongoose = require('mongoose');
 const itemsPerPage = 10;
 
 exports.getJobs = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const loggedIn = await Admin.findById(user_id);
-
+    const loggedIn = await Admin.findById(admin_id);
     if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
@@ -27,7 +26,7 @@ exports.getJobs = async (req, res) => {
     try {
         let jobs = await Booking.find().lean();
 
-        if(!jobs) return res.status(404).send('No jobs found');
+        if(!jobs.length) return res.status(404).send('No jobs found');
 
         //get client & service provider data
 
@@ -67,14 +66,13 @@ exports.getJobs = async (req, res) => {
 }
 
 
-exports.getCompleteJobs = async (req, res) => {
-    const user_id = req.user._id;
-    let isValid = mongoose.Types.ObjectId.isValid(user_id);
+exports.getCompletedJobs = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const loggedIn = await Admin.findById(user_id);
-
+    const loggedIn = await Admin.findById(admin_id);
     if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
@@ -84,7 +82,7 @@ exports.getCompleteJobs = async (req, res) => {
     try {
         let jobs = await Booking.find({ jobStatus: 'completed' }).lean();
 
-        if(!jobs) return res.status(404).send('No completed jobs found');
+        if(!jobs.length) return res.status(404).send('No completed jobs found');
 
         //get client & service provider data
 
