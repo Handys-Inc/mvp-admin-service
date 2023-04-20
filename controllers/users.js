@@ -19,7 +19,7 @@ exports.getClients = async (req, res) => {
 
     const loggedIn = await Admin.findById(admin_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'usermgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -54,7 +54,7 @@ exports.getProviders = async (req, res) => {
 
     const loggedIn = await Admin.findById(admin_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'usermgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -85,4 +85,92 @@ exports.getProviders = async (req, res) => {
     } catch (error) {
         console.log(error)
     }
+}
+
+exports.updateAccountStatus = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
+
+    if (!isValid) return res.status(400).send("Invalid user id");
+
+    let user_id = req.params.id;
+    let user = new mongoose.Types.ObjectId(user_id);
+
+    let status = req.params.status;
+    //if(status !== 'active' || status !== 'suspended') return res.status(400).send('Invalid status');
+
+    const loggedIn = await Admin.findById(admin_id);
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
+
+    //check current status
+    let currentUser = await User.findById(user, { status: 1}).lean();
+    if (currentUser.status === status) return res.status(400).send('Select a different status');
+
+
+    try {
+        let updateStatus = await User.findByIdAndUpdate(user, {
+               status: status
+            }, { new: true });
+            
+            if(updateStatus) {
+                return res.status(200).send({
+                    message: 'User status updated',
+                    data: updateStatus
+                });
+            }
+            else return res.status(400).send('User status update failed');
+
+        
+    } catch (error) {
+        console.log(error)
+    }
+
+}
+
+exports.updateKYCStatus = async (req, res) => {
+    const admin_id = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin_id);
+
+    if (!isValid) return res.status(400).send("Invalid user id");
+
+    let user_id = req.params.id;
+    let user = new mongoose.Types.ObjectId(user_id);
+
+    let kycStatus = req.params.kyc;
+
+    const loggedIn = await Admin.findById(admin_id);
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
+
+    // //check current status
+     let currentUser = await ServiceProvider.findOne({user: user}, { kycVerification: 1}).lean();
+     if(!currentUser) return res.status(400).send('User not found');
+
+    try {
+        let updateKyc;
+        if(kycStatus === 'verified') {
+            updateKyc = await ServiceProvider.findOneAndUpdate({user: user}, {
+                kycVerification: true,
+            })
+        }
+        else if(kycStatus === 'unverified') {
+             updateKyc = await ServiceProvider.findOneAndUpdate({user: user}, {
+                kycVerification: false,
+            }, { new: true });
+
+        }
+        else return res.status(400).send('Invalid KYC status');
+    
+            if(updateKyc) {
+                return res.status(200).send({
+                    message: 'User status updated',
+                    data: updateKyc
+                });
+            }
+            else return res.status(400).send('Provider kyc status update failed');
+
+        
+    } catch (error) {
+        console.log(error)
+    }
+
 }

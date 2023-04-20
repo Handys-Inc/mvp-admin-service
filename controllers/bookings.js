@@ -18,7 +18,7 @@ exports.getJobs = async (req, res) => {
 
     const loggedIn = await Admin.findById(user_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'bookingMgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -75,7 +75,7 @@ exports.getCompleteJobs = async (req, res) => {
 
     const loggedIn = await Admin.findById(user_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'bookingMgt ')) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
@@ -129,31 +129,26 @@ exports.getServiceHistory = async (req, res) => {
 
     if (!isValid) return res.status(400).send("Invalid user id");
 
-    const user_id = req.params.id;
+    let user_id = req.params.id;
+    let user = new mongoose.Types.ObjectId(user_id);
 
     const loggedIn = await Admin.findById(admin_id);
 
-    if(!loggedIn.adminAccess.includes('super' || 'userMgt' || 'bookingMgt' )) return res.status(401).send('Unauthorized access');
+    if(!loggedIn.adminAccess.includes('super') && !loggedIn.adminAccess.includes('bookingMgt') || !loggedIn.adminAccess.includes('userMgt')) return res.status(401).send('Unauthorized access');
 
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const startIndex = (page - 1) * itemsPerPage;
     const endIndex = page * itemsPerPage;
 
     try {
-        // let serviceHistory = await Booking.find(
-        //     {
-        //         $or: [
-        //             { client: user_id}, 
-        //             { serviceProvider: user_id}
-        //         ]
-        //     }
-        // ).lean();
-
         let serviceHistory = await Booking.find(
-            { serviceProvider: user_id}, 
+            {
+                $or: [
+                    { client: user}, 
+                    { serviceProvider: user}
+                ]
+            }
         ).lean();
-
-        console.log(serviceHistory);
 
         if(!serviceHistory) return res.status(404).send('No jobs found for user');
 

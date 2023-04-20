@@ -1,21 +1,64 @@
-const axios = require('axios');
-const mongoose = require("mongoose");
-require("dotenv").config();
+const mongoose = require('mongoose');
+const User = require("./user"); //User model
 
-async function fetchServiceProviderSchema() {
-    const url = process.env.PROVIDER_SCHEMA;
-    try {
-        const response = await axios.get(url);
-        return response.data;
-    } catch (error) {
-        console.log(error);
+const serviceProviderSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    consent: {
+        type: Boolean
+    },
+    serviceType: [{
+        type: String,
+        enum: ['painter', 'plumber', 'electrician', 'cleaner', 'general']
+    }],
+    experience: {
+        upper: { type: Number },
+        lower: { type: Number }
+    },
+    bookingType: {
+        type: String,
+        enum: ['instant', 'reservation']
+    },
+    rate: {
+        type: Number
+    },
+    bio: {
+        type: String,
+    },
+    availability: {
+        start: { type: Date },
+        end: { type: Date }
+    },
+    profilePicture: {
+        type: String
+    },
+    userIDImages: [
+        {
+            type: String,
+            description: String
+        }
+    ],
+    insuranceImage: [
+        {
+            type: String,
+            description: String
+        }
+    ], 
+    completedJobsImages: [
+        {
+            type: String,
+            description: String
+        }
+    ], 
+    kycVerification: {
+        type: Boolean
     }
-}
+    
+});
 
-const providerSchema =  fetchServiceProviderSchema();
-
-const ServiceProviderSchema = new mongoose.Schema(providerSchema);
-
-const ServiceProvider = mongoose.model("ServiceProvider", ServiceProviderSchema);
+const ServiceProvider = mongoose.model('ServiceProvider', serviceProviderSchema);
 
 module.exports.ServiceProvider = ServiceProvider;
