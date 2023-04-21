@@ -35,12 +35,15 @@ app.options("*", cors());
 const authRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const bookingRoutes = require('./routes/bookings');
+const ticketRoutes = require('./routes/tickets');
+const disputeRoutes = require('./routes/disputes');
 
 app.get("/", (req, res, next) => { return res.status(200).json({message: "Welcome to Handys Admin Service"})});
 app.use("/api/admin", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/bookings", bookingRoutes);
-// app.use("/api/service-providers", serviceProviderRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/disputes", disputeRoutes);
 
 app.use(session({
   secret: process.env.JWT_KEY,

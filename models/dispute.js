@@ -1,21 +1,52 @@
-const axios = require('axios');
-const mongoose = require("mongoose");
-require("dotenv").config();
+const mongoose = require('mongoose');
 
-async function fetchDisputeSchema() {
-    const url = process.env.DISPUTE_SCHEMA;
-    try {
-        const response = await axios.get(url);
-        return response.data;
-    } catch (error) {
-        console.log(error);
-    }
-}
 
-const disputeSchema =  fetchDisputeSchema();
+const disputeSchema = new mongoose.Schema({
+    client: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    serviceProvider: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'ServiceProvider'
+    },
+    bookingCode: {
+        type: String,
+        required: true,
+        ref: 'Booking'
+    },
+    disputeType: {
+        type: String,
+        enum: ['poorQuality', 'harassment', 'unprofessional']
+    },
+    information: {
+        type: String
+    },
+    disputeImages: [
+        {
+            type: String,
+            description: String
+        }
+    ],
+    resolvedFor: {
+        type: String,
+        enum: ['client', 'serviceProvider', 'none'],
+        default: 'none',
+    },
+    disputeStatus: {
+        type: String,
+        enum: ['resolved', 'unresolved'],
+        default: 'unresolved'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    
+});
 
-const DisputeSchema = new mongoose.Schema(disputeSchema);
-
-const Dispute = mongoose.model("Dispute", DisputeSchema);
+const Dispute = mongoose.model('Dispute', disputeSchema);
 
 module.exports.Dispute = Dispute;
