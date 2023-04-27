@@ -88,7 +88,7 @@ exports.updateAccess = async (req, res) => {
     if(!loggedIn.adminAccess.includes('super')) return res.status(401).send('Unauthorized access');
 
     //find user to be updated
-    const admin = await Admin.findOne({$and: [{_id: admin_id, status: "active"}]});
+    const admin = await Admin.findOne({$and: [{_id: adminUser, status: "active"}]});
     if(!admin) return res.status(404).send('Admin user not found');
 
     try {
@@ -243,3 +243,39 @@ exports.deleteAdmin = async (req, res) => {
         console.log(error);
     }
 }
+
+exports.getSingleAdmin = async (req, res, next) => {
+    const admin = req.admin._id;
+    let isValid = mongoose.Types.ObjectId.isValid(admin);
+    if (!isValid) return res.status(400).send("Invalid admin id");
+
+    const adminDetails = await getAdmin(req.params.id);
+
+    if(!adminDetails) return res.status(400).send("Active user account not found");
+
+    return res.status(200).send(_.pick(adminDetails, ["_id", "firstName", "lastName", "email", "profilePicture", "adminAccess", "userLevel", "status"]));
+};
+
+async function getAdmin (id) {
+    const binaryId = Buffer.from(id, 'hex');
+
+    const adminId = mongoose.Types.ObjectId(binaryId);
+    try {
+        const admin = await Admin.findOne({$and: [{_id: adminId, status: "active"}]})
+        //const user = await User.findById(userId).where({ status: "active" })
+        .select({
+            _id: 1,
+            firstName: 1,
+            lastName: 1,
+            email: 1,
+            profilePicture: 1,
+            adminAccess: 1,
+            userLevel: 1,
+            status: 1,
+        });
+
+        return admin;
+    } catch (error) {
+        console.error('unable to get admin', error);
+    }
+};
